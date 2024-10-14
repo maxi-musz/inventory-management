@@ -4,20 +4,28 @@ import path from "path";
 const prisma = new PrismaClient();
 
 async function deleteAllData(orderedFileNames: string[]) {
-  const modelNames = orderedFileNames.map((fileName) => {
-    const modelName = path.basename(fileName, path.extname(fileName));
-    return modelName.charAt(0).toUpperCase() + modelName.slice(1);
-  });
+  // This defines the correct order for deletion
+  const deleteOrder = [
+    "sales.json", // Sales must be deleted first due to the foreign key constraint
+    "purchases.json", // Purchases must be deleted before Products
+    "expenseSummary.json",
+    "expenses.json",
+    "expenseByCategory.json",
+    "users.json",
+    "products.json", // Products last
+    "salesSummary.json",
+    "purchaseSummary.json"
+  ];
 
-  for (const modelName of modelNames) {
-    const model: any = prisma[modelName as keyof typeof prisma];
+  for (const fileName of deleteOrder) {
+    const modelName = path.basename(fileName, path.extname(fileName));
+    const model: any = prisma[modelName.charAt(0).toUpperCase() + modelName.slice(1) as keyof typeof prisma];
+
     if (model) {
       await model.deleteMany({});
-      console.log(`Cleared data from ${modelName}`);
+      console.log(`Cleared data from ${modelName.charAt(0).toUpperCase() + modelName.slice(1)}`);
     } else {
-      console.error(
-        `Model ${modelName} not found. Please ensure the model name is correctly specified.`
-      );
+      console.error(`Model ${modelName} not found. Please ensure the model name is correctly specified.`);
     }
   }
 }
@@ -25,6 +33,7 @@ async function deleteAllData(orderedFileNames: string[]) {
 async function main() {
   const dataDirectory = path.join(__dirname, "seedData");
 
+  // Ordered to reflect the dependency hierarchy
   const orderedFileNames = [
     "products.json",
     "expenseSummary.json",
@@ -43,7 +52,7 @@ async function main() {
     const filePath = path.join(dataDirectory, fileName);
     const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
     const modelName = path.basename(fileName, path.extname(fileName));
-    const model: any = prisma[modelName as keyof typeof prisma];
+    const model: any = prisma[modelName.charAt(0).toUpperCase() + modelName.slice(1) as keyof typeof prisma];
 
     if (!model) {
       console.error(`No Prisma model matches the file name: ${fileName}`);
@@ -56,7 +65,7 @@ async function main() {
       });
     }
 
-    console.log(`Seeded ${modelName} with data from ${fileName}`);
+    console.log(`Seeded ${modelName.charAt(0).toUpperCase() + modelName.slice(1)} with data from ${fileName}`);
   }
 }
 
