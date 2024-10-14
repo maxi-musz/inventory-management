@@ -7,6 +7,7 @@ import morgan from "morgan";
 import colors from "colors"
 
 // ROUTE IMPORTS 
+import dashboardRoutes from "./routes/dashboardRoutes";
 
 // CONFIGURATIONS
 dotenv.config()
@@ -19,13 +20,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(cors());
 
+app.use("/dashboard", dashboardRoutes)
+
 // ROUTES
 app.get("/", (req, res) => {
     console.log(colors.rainbow("Inventory api is working..."))
     res.send("Inventory api is working...")
 })
-
-
 
 // SERVER
 const port = process.env.PORT || 2000
